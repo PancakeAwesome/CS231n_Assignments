@@ -3,7 +3,7 @@ import random
 import numpy as np
 from cs231n.data_utils import load_CIFAR10
 # import matplotlib.pyplot as plt
-# %matplotlib inline
+# %matpblotlib inline
 # plt.rcParams['figure.figsize'] = (10.0, 8.0) # set default size of plots
 # plt.rcParams['image.interpolation'] = 'nearest'
 # plt.rcParams['image.cmap'] = 'gray'
@@ -148,8 +148,8 @@ for lr in learning_rates:
             best_softmax = softmax
 
 # 打印结果
-for lr, rs in results:
-    train_acc, val_acc = results[(lr, rs)]
+for lr, reg in results:
+    train_accuracy, val_accuracy = results[(lr, reg)]
     print 'lr %e reg %e train accuracy: %f val accuracy: %f' % (
                 lr, reg, train_accuracy, val_accuracy)
     
@@ -157,7 +157,7 @@ print 'best validation accuracy achieved during cross-validation: %f' % best_val
 
 # 用测试集测试结果
 y_test_pred = best_softmax.predict(X_test)
-acc_test = np.mean(y_test == y_test_pred)
+test_accuracy = np.mean(y_test == y_test_pred)
 print 'softmax on raw pixels final test set accuracy: %f' % (test_accuracy, )
 
 # 可视化结果
@@ -175,4 +175,4 @@ print 'softmax on raw pixels final test set accuracy: %f' % (test_accuracy, )
 #   wimg = 255.0 * (w[:, :, :, i].squeeze() - w_min) / (w_max - w_min)
 #   plt.imshow(wimg.astype('uint8'))
 #   plt.axis('off')
-#   plt.title(classes[i])
+  # plt.title(classes[i])
