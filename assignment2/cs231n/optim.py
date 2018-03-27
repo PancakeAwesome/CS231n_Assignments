@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import numpy as np
 
 """
@@ -33,21 +34,21 @@ setting next_w equal to w.
 def sgd(w, dw, config=None):
   """
   Performs vanilla stochastic gradient descent.
-
+  朴素随机梯度下降法
   config format:
   - learning_rate: Scalar learning rate.
   """
   if config is None: config = {}
-  config.setdefault('learning_rate', 1e-2)
+  config.setdefault('learning_rate', 1e-2) # 如果config没有参数输入，则默认使用字典{'learning_rate', 1e-2}
 
   w -= config['learning_rate'] * dw
-  return w, config
 
+  return w, config
 
 def sgd_momentum(w, dw, config=None):
   """
   Performs stochastic gradient descent with momentum.
-
+  动量版的随机梯度下降
   config format:
   - learning_rate: Scalar learning rate.
   - momentum: Scalar between 0 and 1 giving the momentum value.
@@ -65,13 +66,13 @@ def sgd_momentum(w, dw, config=None):
   # TODO: Implement the momentum update formula. Store the updated value in   #
   # the next_w variable. You should also use and update the velocity v.       #
   #############################################################################
-  v = config['momentum'] * v - config['learning_rate'] * dw
-  next_w = w + v
+  v = config["momentum"] * v - config['learning_rate'] * dw # 与速度融合
+  next_w += v # 与位置融合
   #pass
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
-  config['velocity'] = v
+  config['velocity'] = v # 缓冲存储动量
 
   return next_w, config
 

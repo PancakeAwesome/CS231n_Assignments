@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import numpy as np
 
 from cs231n.layers import *
@@ -46,9 +47,9 @@ class TwoLayerNet(object):
     # and biases using the keys 'W2' and 'b2'.                                 #
     ############################################################################
     self.params['W1'] = weight_scale * np.random.randn(input_dim, hidden_dim)
-    self.params['b1'] = weight_scale * np.random.randn(hidden_dim,)
+    self.params['b1'] = np.zeros(hidden_dim)
     self.params['W2'] = weight_scale * np.random.randn(hidden_dim, num_classes)
-    self.params['b2'] = weight_scale * np.random.randn(num_classes,)
+    self.params['b2'] = np.zeros(num_classes)
     #pass
     ############################################################################
     #                             END OF YOUR CODE                             #
@@ -82,7 +83,7 @@ class TwoLayerNet(object):
     #a1_out, a1_cache = affine_forward(X, self.params['W1'], self.params['b1'])
     #r1_out, r1_cache = relu_forward(a1_out)
     #数据在隐藏层和输出层的前向传播：
-    h1_out, h1_cache = affine_forward(X, self.params['W1'], self.params['b1'])
+    h1_out, h1_cache = affine_relu_forward(X, self.params['W1'], self.params['b1'])
     scores, out_cache = affine_forward(h1_out, self.params['W2'], self.params['b2'])
     #pass
     ############################################################################
