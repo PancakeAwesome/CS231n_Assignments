@@ -217,7 +217,7 @@ class FullyConnectedNet(object):
         self.params['W%d' %(i + 1,)] = weight_scale * np.random.randn(in_dim, h_dim)
         # 小随机数为初始值
         # Eg:b1(H1,), b2(H2)...
-        self.params['b%d' %(i + 1,)] = zeros((h_dim,))
+        self.params['b%d' %(i + 1,)] = np.zeros((h_dim,))
         # 0为初始值
         if use_batchnorm: # 如果使用了BN层
             #Eg: gamma1(H1), gamma2(H2)... 1为初始值
@@ -228,7 +228,7 @@ class FullyConnectedNet(object):
     #pass
     #定义输出层的参数到字典params中：
     self.params['W%d' % (self.num_layers,)] = weight_scale * np.random.randn(in_dim, num_classes)
-    self.params['b%d' % (self.num_layers,)] = zeros((num_classes,))
+    self.params['b%d' % (self.num_layers,)] = np.zeros((num_classes,))
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -324,10 +324,10 @@ class FullyConnectedNet(object):
     # 从第一个隐藏层开始循环每一个隐藏层，传递数据out，保存每一层中的缓冲cache
     out = X
     for i in range(self.num_layers - 1): # 在每个hidden层中循环
-        w, b = self.params['W%' %(i + 1,)], self.params['W%' %(i + 1,)]
+        w, b = self.params['W%d' %(i + 1,)], self.params['b%d' %(i + 1,)]
         if self.use_dropout: # 若开启批量归一化
-            gamma = self.params['gamma%' %(i + 1,)]
-            beta = self.params['beta%' %(i + 1,)]
+            gamma = self.params['gamma%d' %(i + 1,)]
+            beta = self.params['beta%d' %(i + 1,)]
             out, fc_mix_cache[i] = affine_bn_relu_forward(out, w, b, gamma, beta, self.bn_params[i])
         else:
             out, fc_mix_cache[i] = affine_relu_forward(out, w, b)
@@ -377,17 +377,17 @@ class FullyConnectedNet(object):
     ############################################################################
     # 开始反向传播计算梯度
     loss, dout = softmax_loss(scores, y)
-    loss += 0.5 * reg * np.sum(self.params['W%d' %(num_layers,)]**2)
+    loss += 0.5 * self.reg * np.sum(self.params['W%d' %(self.num_layers,)]**2)
 
     # 输出层处梯度的反向传播，顺便把梯度保存在梯度字典grad中：
     dout, dw, db = affine_backward(dout, out_cache)
-    grads['W%d' %(num_layers,)] = dw + self.reg * self.params['W%d' %(num_layers,)]
-    grads['b%d' %(num_layers,)] = db + self.reg * self.params['b%d' %(num_layers,)]
+    grads['W%d' %(self.num_layers,)] = dw + self.reg * self.params['W%d' %(self.num_layers,)]
+    grads['b%d' %(self.num_layers,)] = db + self.reg * self.params['b%d' %(self.num_layers,)]
 
     # 在每一个隐藏层处的梯度的方向传播，不仅顺便更新了梯度字典grad,还迭代算出了损失值loss；
     for i in range(self.num_layers - 1):
         ri = self.num_layers - 2 - i # 倒数第ri+1隐藏层
-        loss += 0.5 * reg * np.sum(self.params['W%d' %(ri + 1,)]**2) # 迭代的补上正则项
+        loss += 0.5 * self.reg * np.sum(self.params['W%d' %(ri + 1,)]**2) # 迭代的补上正则项
 
         if self.use_dropout: # 若开启dropout
             dout = dropout_backward(dout, dp_cache[ri])

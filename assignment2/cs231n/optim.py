@@ -67,7 +67,7 @@ def sgd_momentum(w, dw, config=None):
   # the next_w variable. You should also use and update the velocity v.       #
   #############################################################################
   v = config["momentum"] * v - config['learning_rate'] * dw # 与速度融合
-  next_w += v # 与位置融合
+  next_w = w + v # 与位置融合
   #pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -144,9 +144,9 @@ def adam(x, dx, config=None):
   config['t'] += 1
   config['m'] = config['beta1'] * config['m'] + (1 - config['beta1']) * dx
   config['v'] = config['beta2'] * config['v'] + (1 - config['beta2']) * (dx**2)
-  mb = config['m'] / (1 - config['beta1']**config['t'])
-  vb = config['v'] / (1 - config['beta2']**config['t'])
-  next_x = x - config['learning_rate'] * mb / (np.sqrt(vb) + config['epsilon'])
+  mb = config['m'] / (1 - config['beta1'] ** config['t'])
+  mv = config['v'] / (1 - config['beta2'] ** config['t'])
+  next_x = x - config['learning_rate'] * mb / (np.sqrt(mv) + config['epsilon'])
   #pass
   #############################################################################
   #                             END OF YOUR CODE                              #
