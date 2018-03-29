@@ -481,7 +481,7 @@ def conv_backward_naive(dout, cache):
 
   # 下面，我们模拟卷积，首先填充x。
   padded_x = np.lib.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), mode = 'constant', constant_values = 0)
-  padded_dx = zeros_like(padded_x)# 填充了的dx，后面去填充即可得到dx
+  padded_dx = np.zeros_like(padded_x)# 填充了的dx，后面去填充即可得到dx
   dw = np.zeros_like(w)
   db = np.zeros_like(b)
 
@@ -490,7 +490,10 @@ def conv_backward_naive(dout, cache):
       for i in range(new_H):
         for j in range(new_W):
           db[f] += dout[n, f, i, j] # dg对db求导:1*dout
-          dw[f] += padded_x[n, :, ]
+          dw[f] += padded_x[n, :, i * stride: i * stride + HH, j * stride: j * stride + WW] * dout[n, f, i, j]
+          padded_dx[n, :, i * stride: i * stride + HH, j * stride: j * stride + WW] += w[f] * dout[n, f, i, j]
+  #去掉填充部分
+  dx = padded_dx[:, :, pad:pad + H, pad:pad + W]
   #pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -517,6 +520,7 @@ def max_pool_forward_naive(x, pool_param):
   #############################################################################
   # TODO: Implement the max pooling forward pass                              #
   #############################################################################
+  # 任务：实现正向最大池化操作
   N, C, H, W = x.shape
   HH, WW, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
   H_out = (H-HH)/stride+1
@@ -525,7 +529,23 @@ def max_pool_forward_naive(x, pool_param):
   for i in xrange(H_out):
         for j in xrange(W_out):
             x_masked = x[:,:,i*stride : i*stride+HH, j*stride : j*stride+WW]
-            out[:,:,i,j] = np.max(x_masked, axis=(2,3)) 
+            out[:,:,i,j] = np.max(x_masked, axis=(2,3))
+
+  # N, C, H, W = x.shape
+  # pool_height = pool_param['pool_height']
+  # pool_width = pool_param['pool_width']
+  # pool_stride = pool_param['stride']
+
+  # new_H = 1 + int((H - pool_height / pool_stride))
+  # new_W = 1 + int((W - pool_width / pool_stride))
+
+  # out = np.zeros((N, C, new_H, new_W))
+
+  # for n in range(N):
+  #   for c in range(C):
+  #     for i in range(new_H):
+  #       for j in range(new_W):
+  #         out[n, c, i, j] = np.max(x[n, c, i * pool_stride:i * pool_stride + pool_height, j * pool_stride:j * pool_stride + pool_width])
   #pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -549,19 +569,25 @@ def max_pool_backward_naive(dout, cache):
   #############################################################################
   # TODO: Implement the max pooling backward pass                             #
   #############################################################################
+  # 反向最大池化操作
+  # 池化层没有参数，只需求出当前层的梯度dx
   x, pool_param = cache
   N, C, H, W = x.shape
-  HH, WW, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
-  H_out = (H-HH)/stride+1
-  W_out = (W-WW)/stride+1
+  pool_height = pool_param['pool_height']
+  pool_width = pool_param['pool_width']
+  pool_stride = pool_param['stride']
+
+  new_H = 1 + int((H - pool_height) / pool_stride)
+  new_W = 1 + int((W - pool_width) / pool_stride)
   dx = np.zeros_like(x)
-  
-  for i in xrange(H_out):
-     for j in xrange(W_out):
-        x_masked = x[:,:,i*stride : i*stride+HH, j*stride : j*stride+WW]
-        max_x_masked = np.max(x_masked,axis=(2,3))
-        temp_binary_mask = (x_masked == (max_x_masked)[:,:,None,None])
-        dx[:,:,i*stride : i*stride+HH, j*stride : j*stride+WW] += temp_binary_mask * (dout[:,:,i,j])[:,:,None,None]
+
+  for n in range(N):
+    for c in range(C):
+      for i in range(new_H):
+        for j in range(new_W):
+          window = x[n, c, i * pool_stride:i * pool_stride + pool_height, j * pool_stride:j * pool_stride + pool_width]
+          dx[n, c, i * pool_stride:i * pool_stride + pool_height, j * pool_stride:j * pool_stride + pool_width] = (window == np.max(window)) * dout[n, c, i, j]
+          # 找到当前池化窗口中最大的数值 还原
   #pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -572,7 +598,7 @@ def max_pool_backward_naive(dout, cache):
 def spatial_batchnorm_forward(x, gamma, beta, bn_param):
   """
   Computes the forward pass for spatial batch normalization.
-  
+  空间批量归一化
   Inputs:
   - x: Input data of shape (N, C, H, W)
   - gamma: Scale parameter, of shape (C,)
@@ -601,8 +627,11 @@ def spatial_batchnorm_forward(x, gamma, beta, bn_param):
   # be very short; ours is less than five lines.                              #
   #############################################################################
   N, C, H, W = x.shape
-  temp_output, cache = batchnorm_forward(x.transpose(0,3,2,1).reshape((N*H*W,C)), gamma, beta, bn_param)
-  out = temp_output.reshape(N,W,H,C).transpose(0,3,2,1)
+  x_new = x.transpose(0, 2, 3, 1).reshape((N * H * W, C)) # 重新构造数据矩阵
+  # 将每个通道的图片分开来归一化
+  out, cache = batchnorm_forward(x_new, gamma, beta, bn_param)
+  # 重新构造归一化好的输出矩阵
+  out = out.reshape(N, H, W, C).transpose(0, 3, 1, 2)
   #pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -633,9 +662,11 @@ def spatial_batchnorm_backward(dout, cache):
   # version of batch normalization defined above. Your implementation should  #
   # be very short; ours is less than five lines.                              #
   #############################################################################
-  N,C,H,W = dout.shape
-  dx_temp, dgamma, dbeta = batchnorm_backward_alt(dout.transpose(0,3,2,1).reshape((N*H*W,C)),cache)
-  dx = dx_temp.reshape(N,W,H,C).transpose(0,3,2,1)
+  N, C, H, W = dout.shape
+  dout_new = dout.transpose(0, 2, 3, 1).reshape((N * H * W, C)) # 重新构造数据矩阵
+  dx, dgamma, dbeta = batchnorm_bacayerrkward(dout_new, cache)
+  # 重新构造归一化好的输出矩阵
+  dx = dx.reshape(N, H, W, C).transpose(0, 3, 1, 2)
   #pass
   #############################################################################
   #                             END OF YOUR CODE                              #

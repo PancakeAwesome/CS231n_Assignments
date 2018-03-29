@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from cs231n.layers import *
-from cs231n.fast_layers import *
+# from cs231n.fast_layers import *
 
 
 def affine_relu_forward(x, w, b):
@@ -58,7 +58,7 @@ def conv_relu_forward(x, w, b, conv_param):
   - out: Output from the ReLU
   - cache: Object to give to the backward pass
   """
-  a, conv_cache = conv_forward_fast(x, w, b, conv_param)
+  a, conv_cache = conv_forward_naive(x, w, b, conv_param)
   out, relu_cache = relu_forward(a)
   cache = (conv_cache, relu_cache)
   return out, cache
@@ -70,7 +70,7 @@ def conv_relu_backward(dout, cache):
   """
   conv_cache, relu_cache = cache
   da = relu_backward(dout, relu_cache)
-  dx, dw, db = conv_backward_fast(da, conv_cache)
+  dx, dw, db = conv_backward_naive(da, conv_cache)
   return dx, dw, db
 
 
@@ -87,20 +87,33 @@ def conv_relu_pool_forward(x, w, b, conv_param, pool_param):
   - out: Output from the pooling layer
   - cache: Object to give to the backward pass
   """
-  a, conv_cache = conv_forward_fast(x, w, b, conv_param)
-  s, relu_cache = relu_forward(a)
-  out, pool_cache = max_pool_forward_fast(s, pool_param)
-  cache = (conv_cache, relu_cache, pool_cache)
-  return out, cache
+  # a, conv_cache = conv_forward_fast(x, w, b, conv_param)
+  # a, conv_cache = conv_forward_fast(x, w, b, conv_param)
+  # s, relu_cache = relu_forward(a)
+  # out, pool_cache = max_pool_forward_fast(s, pool_param)
+  # cache = (conv_cache, relu_cache, pool_cache)
 
+  # 朴素版：适应机器环境
+  a, conv_cache = conv_forward_naive(x, w, b, conv_param)
+  s, relu_cache = relu_forward(a)
+  out, pool_cache = max_pool_forward_naive(s, pool_param)
+  cache = (conv_cache, relu_cache, pool_cache)
+
+  return out, cache
 
 def conv_relu_pool_backward(dout, cache):
   """
   Backward pass for the conv-relu-pool convenience layer
   """
-  conv_cache, relu_cache, pool_cache = cache
-  ds = max_pool_backward_fast(dout, pool_cache)
-  da = relu_backward(ds, relu_cache)
-  dx, dw, db = conv_backward_fast(da, conv_cache)
-  return dx, dw, db
+  # conv_cache, relu_cache, pool_cache = cache
+  # ds = max_pool_backward_fast(dout, pool_cache)
+  # da = relu_backward(ds, relu_cache)
+  # dx, dw, db = conv_backward_fast(da, conv_cache)
 
+  # 朴素版：适应机器环境
+  conv_cache, relu_cache, pool_cache = cache
+  ds = max_pool_backward_naive(dout, pool_cache)
+  da = relu_backward(ds, relu_cache)
+  dx, dw, db = conv_backward_naive(da, conv_cache)
+
+  return dx, dw, db
