@@ -180,7 +180,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
 
     out = gamma * x_hat + beta
 
-    cache = (x, sample_mean, sample_var, x_hat, gamma, beta)
+    cache = (x, sample_mean, sample_var, x_hat, eps, gamma, beta)
     running_mean = momentum * running_mean + (1 - momentum) * sample_mean # 动量更新法更新running_mean参数
     # 指数平滑法：最终测试用的running_mean, running_var参数不再是一个bn层决定的，而是所有
     # BN层一起决定
@@ -238,14 +238,34 @@ def batchnorm_backward(dout, cache):
   dgamma = np.sum(dout * x_hat, axis = 0) # 见印象笔记BN层反向传播第5行公式
   dbeta = np.sum(dout * 1.0, axis = 0) # 第6行公式
   dx_hat = dout * gamma # 第1行
-  dx_hat_numerator = dx_hat * (-1.0) / np.sqrt(var + eps) # 第3行第1项
-  dx_hat_denominator = np.mean(dx_hat * (x - mean), axis = 0) # 第2行前半部分
-  dx_1 = dx_hat * 1.0 / np.sqrt(var + eps) # 第4行第1项
+  dx_hat_numerator = dx_hat / np.sqrt(var + eps) # 第3行第1项
+  dx_hat_denominator = np.sum(dx_hat * (x - mean), axis = 0) # 第2行前半部分
+  dx_1 = dx_hat_numerator # 第4行第1项
   dvar = dx_hat_denominator * (-0.5) * ((var + eps)**(-1.5)) #第2行
-  dmean = np.mean(dx_hat_numerator, axis = 0) + dvar * np.mean((-2.0) * (x - mean) / N, axis = 0) # 第3行
+  dmean = -1.0 * np.sum(dx_hat_numerator, axis = 0) + dvar * np.mean((-2.0) * (x - mean) / N, axis = 0) # 第3行
   dx_var = dvar * 2.0 * (x - mean) / N # 第4行第2部分 
-  dx_mean = dmean / N # 第4行第3部分 
+  dx_mean = dmean * 1.0 / N # 第4行第3部分 
   dx = dx_1 + dx_var + dx_mean # 第4行
+
+  # gamma, x, u_b, sigma_squared_b, eps, x_hat = cache
+  # N = x.shape[0]
+
+  # dx_1 = gamma * dout
+  # dx_2_b = np.sum((x - u_b) * dx_1, axis=0)
+  # dx_2_a = ((sigma_squared_b + eps) ** -0.5) * dx_1
+  # dx_3_b = (-0.5) * ((sigma_squared_b + eps) ** -1.5) * dx_2_b
+  # dx_4_b = dx_3_b * 1
+  # dx_5_b = np.ones_like(x) / N * dx_4_b
+  # dx_6_b = 2 * (x - u_b) * dx_5_b
+  # dx_7_a = dx_6_b * 1 + dx_2_a * 1
+  # dx_7_b = dx_6_b * 1 + dx_2_a * 1
+  # dx_8_b = -1 * np.sum(dx_7_b, axis=0)
+  # dx_9_b = np.ones_like(x) / N * dx_8_b
+  # dx_10 = dx_9_b + dx_7_a
+
+  # dgamma = np.sum(x_hat * dout, axis=0)
+  # dbeta = np.sum(dout, axis=0)
+  # dx = dx_10
   #pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -401,24 +421,30 @@ def conv_forward_naive(x, w, b, conv_param):
   # TODO: Implement the convolutional forward pass.                           #
   # Hint: you can use the function np.pad for padding.                        #
   #############################################################################
-  N, C, H, W = x.shape
-  F, _, HH, WW = w.shape
-  stride, pad = conv_param['stride'], conv_param['pad']
-  H_out = 1 + (H + 2 * pad - HH) / stride
-  W_out = 1 + (W + 2 * pad - WW) / stride
-  out = np.zeros((N , F , H_out, W_out))
+  #任务：完成带卷机操作的前向操作
+  #提示，可以使用Np.pad函数实现padding操作
+  N, C, H, W = x.shape # N个样本，C个通道，H的高度，W的宽度
+  F, C, HH, WW = w.shape # F个滤波器，C个通道，HH的滤波器高度，WW的滤波器宽度
+  stride = conv_param['stride'] # 滤波器每次移动的步长
+  pad = conv_param['pad'] # 图片填充的宽度
 
-  x_pad = np.pad(x, ((0,), (0,), (pad,), (pad,)), mode='constant', constant_values=0)
-  for i in range(H_out):
-      for j in range(W_out):
-          x_pad_masked = x_pad[:, :, i*stride:i*stride+HH, j*stride:j*stride+WW]
-          for k in range(F):
-              out[:, k , i, j] = np.sum(x_pad_masked * w[k, :, :, :], axis=(1,2,3))
-          #out[:, : , i, j] = np.sum(x_pad_masked * w[:, :, :, :], axis=(1,2,3))
-          
-  #for k in range(F):
-      #out[:, k, :, :] = out[:, k, :, :] + b[k]
-  out = out + (b)[None, :, None, None]
+  # 计算卷积结果矩阵的大小并分配全零值占位
+  new_H = 1 + int((H + 2 * pad - HH) / stride)
+  new_W = 1 + int((W + 2 * pad - WW) / stride)
+  out = np.zeros((N, F, new_H, new_W))
+
+  # 卷积开始
+  for n in range(N):
+    for f in range(F):
+      # 临时分配（new_H, new_W)大小的全偏移项卷积矩阵，（即提前加上偏移项b[f]）
+      conv_newH_newW = np.ones((new_H, new_W)) * b[f]
+      for c in range(C):
+        # 填充原始矩阵，填充大小为pad，填充值为0
+        padded_x = np.lib.pad(x[n, c], pad_width = pad, mode = 'constant', constant_values = 0)
+        for i in range(new_H): # 对每个通道的一个样本数据矩阵的卷积矩阵X操作
+          for j in range(new_W):
+            conv_newH_newW[i, j] += np.sum(padded_x[i * stride: i * stride + HH, j * stride: j * stride + WW] * w[f, c, :, :]) # new_x = x * w + b
+        out[n, f] = conv_newH_newW
   #pass
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -444,32 +470,27 @@ def conv_backward_naive(dout, cache):
   #############################################################################
   # TODO: Implement the convolutional backward pass.                          #
   #############################################################################
+  # 任务：卷积层的反向传播
+  # 数据准备
   x, w, b, conv_param = cache
-  
+  pad = conv_param['pad']
+  stride = conv_param['stride']
+  F, C, HH, WW = w.shape
   N, C, H, W = x.shape
-  F, _, HH, WW = w.shape
-  stride, pad = conv_param['stride'], conv_param['pad']
-  H_out = 1 + (H + 2 * pad - HH) / stride
-  W_out = 1 + (W + 2 * pad - WW) / stride
-  
-  x_pad = np.pad(x, ((0,), (0,), (pad,), (pad,)), mode='constant', constant_values=0)
-  dx = np.zeros_like(x)
-  dx_pad = np.zeros_like(x_pad)
+  N, F, new_H, new_W = dout.shape
+
+  # 下面，我们模拟卷积，首先填充x。
+  padded_x = np.lib.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), mode = 'constant', constant_values = 0)
+  padded_dx = zeros_like(padded_x)# 填充了的dx，后面去填充即可得到dx
   dw = np.zeros_like(w)
   db = np.zeros_like(b)
-  
-  db = np.sum(dout, axis = (0,2,3))
-  
-  x_pad = np.pad(x, ((0,), (0,), (pad,), (pad,)), mode='constant', constant_values=0)
-  for i in range(H_out):
-      for j in range(W_out):
-          x_pad_masked = x_pad[:, :, i*stride:i*stride+HH, j*stride:j*stride+WW]
-          for k in range(F): #compute dw
-              dw[k ,: ,: ,:] += np.sum(x_pad_masked * (dout[:, k, i, j])[:, None, None, None], axis=0)
-          for n in range(N): #compute dx_pad
-              dx_pad[n, :, i*stride:i*stride+HH, j*stride:j*stride+WW] += np.sum((w[:, :, :, :] * 
-                                                 (dout[n, :, i, j])[:,None ,None, None]), axis=0)
-  dx = dx_pad[:,:,pad:-pad,pad:-pad]
+
+  for n in range(N): # 第n个图像
+    for f in range(F): # 第f个滤波器
+      for i in range(new_H):
+        for j in range(new_W):
+          db[f] += dout[n, f, i, j] # dg对db求导:1*dout
+          dw[f] += padded_x[n, :, ]
   #pass
   #############################################################################
   #                             END OF YOUR CODE                              #

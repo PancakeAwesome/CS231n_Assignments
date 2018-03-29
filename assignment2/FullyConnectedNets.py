@@ -8,9 +8,9 @@ from cs231n.gradient_check import eval_numerical_gradient, eval_numerical_gradie
 from cs231n.solver import Solver
 
 # %matplotlib inline
-# plt.rcParams['figure.figsize'] = (10.0, 8.0) # set default size of plots
-# plt.rcParams['image.interpolation'] = 'nearest'
-# plt.rcParams['image.cmap'] = 'gray'
+plt.rcParams['figure.figsize'] = (10.0, 8.0) # set default size of plots
+plt.rcParams['image.interpolation'] = 'nearest'
+plt.rcParams['image.cmap'] = 'gray'
 
 # for auto-reloading external modules
 # see http://stackoverflow.com/questions/1907993/autoreload-of-modules-in-ipython
@@ -293,11 +293,11 @@ solver = Solver(model, small_data,
          )
 solver.train()
 
-# plt.plot(solver.loss_history, 'o')
-# plt.title('Training loss history')
-# plt.xlabel('Iteration')
-# plt.ylabel('Training loss')
-# plt.show()
+plt.plot(solver.loss_history, 'o')
+plt.title('Training loss history')
+plt.xlabel('Iteration')
+plt.ylabel('Training loss')
+plt.show()
 
 # 更新参数：sgd+momentum
 from cs231n.optim import sgd_momentum
@@ -350,33 +350,33 @@ for update_rule in ['sgd', 'sgd_momentum']:
   solver.train()
   print
 
-# plt.subplot(3, 1, 1)
-# plt.title('Training loss')
-# plt.xlabel('Iteration')
+plt.subplot(3, 1, 1)
+plt.title('Training loss')
+plt.xlabel('Iteration')
 
-# plt.subplot(3, 1, 2)
-# plt.title('Training accuracy')
-# plt.xlabel('Epoch')
+plt.subplot(3, 1, 2)
+plt.title('Training accuracy')
+plt.xlabel('Epoch')
 
-# plt.subplot(3, 1, 3)
-# plt.title('Validation accuracy')
-# plt.xlabel('Epoch')
+plt.subplot(3, 1, 3)
+plt.title('Validation accuracy')
+plt.xlabel('Epoch')
 
-# for update_rule, solver in solvers.iteritems():
-#   plt.subplot(3, 1, 1)
-#   plt.plot(solver.loss_history, 'o', label=update_rule)
+for update_rule, solver in solvers.iteritems():
+  plt.subplot(3, 1, 1)
+  plt.plot(solver.loss_history, 'o', label=update_rule)
   
-#   plt.subplot(3, 1, 2)
-#   plt.plot(solver.train_acc_history, '-o', label=update_rule)
+  plt.subplot(3, 1, 2)
+  plt.plot(solver.train_acc_history, '-o', label=update_rule)
 
-#   plt.subplot(3, 1, 3)
-#   plt.plot(solver.val_acc_history, '-o', label=update_rule)
+  plt.subplot(3, 1, 3)
+  plt.plot(solver.val_acc_history, '-o', label=update_rule)
   
-# for i in [1, 2, 3]:
-#   plt.subplot(3, 1, i)
-#   plt.legend(loc='upper center', ncol=4)
-# plt.gcf().set_size_inches(15, 15)
-# plt.show()
+for i in [1, 2, 3]:
+  plt.subplot(3, 1, i)
+  plt.legend(loc='upper center', ncol=4)
+plt.gcf().set_size_inches(15, 15)
+plt.show()
 
 # 测试RMSprop和Adam方法更新参数
 # 测试RMSprop方法更新参数
@@ -455,75 +455,77 @@ for update_rule in ['adam', 'rmsprop']:
   solver.train()
   print
 
-# plt.subplot(3, 1, 1)
-# plt.title('Training loss')
-# plt.xlabel('Iteration')
+plt.subplot(3, 1, 1)
+plt.title('Training loss')
+plt.xlabel('Iteration')
 
-# plt.subplot(3, 1, 2)
-# plt.title('Training accuracy')
-# plt.xlabel('Epoch')
+plt.subplot(3, 1, 2)
+plt.title('Training accuracy')
+plt.xlabel('Epoch')
 
-# plt.subplot(3, 1, 3)
-# plt.title('Validation accuracy')
-# plt.xlabel('Epoch')
+plt.subplot(3, 1, 3)
+plt.title('Validation accuracy')
+plt.xlabel('Epoch')
 
-# for update_rule, solver in solvers.iteritems():
-#   plt.subplot(3, 1, 1)
-#   plt.plot(solver.loss_history, 'o', label=update_rule)
+for update_rule, solver in solvers.iteritems():
+  plt.subplot(3, 1, 1)
+  plt.plot(solver.loss_history, 'o', label=update_rule)
   
-#   plt.subplot(3, 1, 2)
-#   plt.plot(solver.train_acc_history, '-o', label=update_rule)
+  plt.subplot(3, 1, 2)
+  plt.plot(solver.train_acc_history, '-o', label=update_rule)
 
-#   plt.subplot(3, 1, 3)
-#   plt.plot(solver.val_acc_history, '-o', label=update_rule)
+  plt.subplot(3, 1, 3)
+  plt.plot(solver.val_acc_history, '-o', label=update_rule)
   
-# for i in [1, 2, 3]:
-#   plt.subplot(3, 1, i)
-#   plt.legend(loc='upper center', ncol=4)
-# plt.gcf().set_size_inches(15, 15)
-# plt.show()
+for i in [1, 2, 3]:
+  plt.subplot(3, 1, i)
+  plt.legend(loc='upper center', ncol=4)
+plt.gcf().set_size_inches(15, 15)
+plt.show()
 
-# 训练出一个好的模型（使用dropout和batchnormalization）
+# 正式用全部数据训练出一个好的模型（使用dropout和batchnormalization）
 # best_model = None
 # ################################################################################
 # # TODO: Train the best FullyConnectedNet that you can on CIFAR-10. You might   #
 # # batch normalization and dropout useful. Store your best model in the         #
 # # best_model variable.                                                         #
 # ################################################################################
-# X_test = data['X_test']
-# y_test = data['y_test']
-# X_val = data['X_val']
-# y_val = data['y_val']
+weight_scale = 1e-1 #1e-5
+learning_rate = 3e-4
+X_test = data['X_test']
+y_test = data['y_test']
+X_val = data['X_val']
+y_val = data['y_val']
 
-# model = FullyConnectedNet([600, 500, 400, 300, 200, 100], weight_scale = weight_scale, dtype = np.float64, dropout = 0.25, use_batchnorm = True, reg = 1e-2)
-# solver = Solver(model, data, print_every = 500, num_epochs = 30, batch_size = 100, update_rule = 'adam', optim_config = {'learning_rate': learning_rate}, lr_decay = 0.9)
-# solver.train()
-# scores = model.loss(X_test)
-# y_pred = np.argmax(scores, axis = 1)
-# acc = np.mean(y_test == y_pred)
-# print 'test acc: %f' %(acc)
-# best_model = model
+model = FullyConnectedNet([600, 500, 400, 300, 200, 100], weight_scale = weight_scale, dtype = np.float64, dropout = 0.25, use_batchnorm = True, reg = 1e-2)
+solver = Solver(model, data, print_every = 500, num_epochs = 30, batch_size = 100, update_rule = 'adam', optim_config = {'learning_rate': learning_rate}, lr_decay = 0.9)
+solver.train()
+scores = model.loss(X_test)
+y_pred = np.argmax(scores, axis = 1)
+acc = np.mean(y_test == y_pred)
+print 'test acc: %f' %(acc)
+best_model = model
 
-# # plt.subplot(2, 1, 1)
-# # plt.plot(solver.loss_history)
-# # plt.title('Loss history')
-# # plt.xlabel('Iteration')
-# # plt.ylabel('Loss')
+plt.subplot(2, 1, 1)
+plt.plot(solver.loss_history)
+plt.title('Loss history')
+plt.xlabel('Iteration')
+plt.ylabel('Loss')
 
-# # plt.subplot(2, 1, 2)
-# # plt.plot(solver.train_acc_history, label='train')
-# # plt.plot(solver.val_acc_history, label='val')
-# # plt.title('Classification accuracy history')
-# # plt.xlabel('Epoch')
-# # plt.ylabel('Clasification accuracy')
-# # plt.show() 
-# #pass
-# ################################################################################
-# #                              END OF YOUR CODE                                #
-# ################################################################################
+plt.subplot(2, 1, 2)
+plt.plot(solver.train_acc_history, label='train')
+plt.plot(solver.val_acc_history, label='val')
+plt.title('Classification accuracy history')
+plt.xlabel('Epoch')
+plt.ylabel('Clasification accuracy')
+plt.show() 
+#pass
+################################################################################
+#                              END OF YOUR CODE                                #
+################################################################################
 
-# # 测试模型效果
-# y_test_pred = np.argmax(best_model.loss(X_test), axis=1)
-# y_val_pred = np.argmax(best_model.loss(X_val), axis=1)
-# print 'Validation set accuracy: ', (y_val_pred == y_val).mean()
-# print 'Test set accuracy: ', (y_test_pred == y_test).mean()
+# 测试模型效果
+y_test_pred = np.argmax(best_model.loss(X_test), axis=1)
+y_val_pred = np.argmax(best_model.loss(X_val), axis=1)
+print 'Validation set accuracy: ', (y_val_pred == y_val).mean()
+print 'Test set accuracy: ', (y_test_pred == y_test).mean()
